@@ -9,6 +9,7 @@ const gutil = require('gulp-util');
 const rollup = require('gulp-rollup');
 const resolve =  require('rollup-plugin-node-resolve');
 const commonjs = require('rollup-plugin-commonjs');
+const concat = require('gulp-concat');
 const pkg = require('./package.json'); 
 
 const banner = [
@@ -23,32 +24,35 @@ const banner = [
 ].join('\n');
 
 gulp.task("babel", function(){
-  return gulp.src("src/*.js")
+  return gulp.src("src/sticky-sidebar.js")
     .pipe(babel())
     .pipe(gulp.dest("dist"));
 });
 
 gulp.task('bundle', ['babel'], function(){
-  return gulp.src(["dist/sticky-sidebar.js", "dist/jquery.sticky-sidebar.js"])
+  return gulp.src(['dist/sticky-sidebar.js'])
     .pipe(sourcemaps.init())
     // transform the files here.
     .pipe(rollup({
       allowRealFiles: true,
       // any option supported by Rollup can be set here.
-      input: ['./dist/sticky-sidebar.js', './dist/jquery.sticky-sidebar.js'],
-      format: 'umd',
-      name: 'StickySidebar',
-      plugins: [ resolve(), commonjs() ]
+      input: ['./dist/sticky-sidebar.js'],
+      plugins: [ resolve(), commonjs() ],
+      output: {
+        format: 'umd',
+        name: 'StickySidebar',
+      }
     }))
     .pipe(sourcemaps.write('.'))
     .pipe(gulp.dest('./dist'));
 });
 
 gulp.task('uglify', ['bundle'], function(){
-  return gulp.src(["dist/sticky-sidebar.js", "dist/jquery.sticky-sidebar.js"])
+  return gulp.src(['src/ResizeSensor.js', 'dist/sticky-sidebar.js'])
+    .pipe(concat('sticky.js'))
     .pipe(uglify())
     .on('error', function (err) { gutil.log(gutil.colors.red('[Error]'), err.toString()); })
-    .pipe(header(banner, {pkg}))
+    //.pipe(header(banner, {pkg}))
     .pipe(rename({ suffix: '.min' }))
     .pipe(gulp.dest("dist/"));
 });
@@ -57,4 +61,4 @@ gulp.task('watch', function() {
   gulp.watch('src/*.js', ['default']);
 });
 
-gulp.task('default', ['babel', 'bundle', 'uglify']);
+gulp.task('default', ['uglify']);
