@@ -159,7 +159,7 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
        * Inner wrapper selector.
        * @type {String}
        */
-      innerWrapperSelector: '.inner-wrapper-sticky',
+      innerWrapper: '.inner-wrapper-sticky',
 
       /**
        * The name of CSS class to apply to elements when they have become stuck.
@@ -267,10 +267,14 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
           this._setSupportFeatures();
 
           // Get sticky sidebar inner wrapper, if not found, will create one.
-          if (this.options.innerWrapperSelector) {
-            this.sidebarInner = this.sidebar.querySelector(this.options.innerWrapperSelector);
+          if (this.options.innerWrapper) {
+            if (typeof this.options.innerWrapper === 'string') {
+              this.sidebarInner = this.sidebar.querySelector(this.options.innerWrapper);
 
-            if (null === this.sidebarInner) this.sidebarInner = false;
+              if (null === this.sidebarInner) this.sidebarInner = false;
+            } else {
+              this.sidebarInner = this.options.innerWrapper;
+            }
           }
 
           if (!this.sidebarInner) {
@@ -289,7 +293,7 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
               var containers = document.querySelectorAll(this.options.container);
               containers = Array.prototype.slice.call(containers);
 
-              containers.forEach(function (container, item) {
+              containers.forEach(function (container) {
                 if (!container.contains(_this.sidebar)) return;
                 _this.container = container;
               });
@@ -323,19 +327,8 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
       }, {
         key: 'bindEvents',
         value: function bindEvents() {
-          var _this2 = this;
-
           window.addEventListener('resize', this.handleEventDebounce, { passive: true, capture: false });
-          // this.addScrollEvent();
-
-          var cb = function () {
-            _this2.handleEvent();
-          };
-          var observer = new IntersectionObserver(cb, { threshold: [0, .5, 1] });
-          var topp = document.querySelector('.top');
-          observer.observe(topp);
-          var bottom = document.querySelector('.bottom');
-          observer.observe(bottom);
+          this.addScrollEvent();
 
           this.sidebar.addEventListener('update' + EVENT_KEY, this.handleEvent);
 
@@ -552,7 +545,13 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
         key: 'stickyPosition',
         value: function stickyPosition(force) {
           var dims = this.dimensions;
-          if (this._breakpoint || dims.containerInnerHeight === dims.sidebarHeight) return;
+          if (this._breakpoint) return;
+          if (dims.containerInnerHeight <= dims.sidebarHeight) {
+            this.removeScrollEvent();
+            return;
+          } else {
+            this.addScrollEvent();
+          }
 
           force = this._reStyle || force || false;
 
@@ -584,15 +583,6 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
             if (this._initialized) this.sidebarInner.style.left = style.inner.left;
           }
 
-          switch (affixType) {
-            case 'VIEWPORT-TOP':
-            case 'VIEWPORT-BOTTOM':
-              this.addScrollEvent();
-              break;
-            default:
-              this.removeScrollEvent();
-              break;
-          }
           this.affixedType = affixType;
         }
       }, {
@@ -612,7 +602,7 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
       }, {
         key: 'updateSticky',
         value: function updateSticky() {
-          var _this3 = this;
+          var _this2 = this;
 
           var event = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { type: 'scroll' };
 
@@ -625,21 +615,21 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
                 // When browser is scrolling and re-calculate just dimensions
                 // within scroll. 
                 case 'scroll':
-                  _this3._calcDimensionsWithScroll();
-                  _this3.observeScrollDir();
-                  _this3.stickyPosition();
+                  _this2._calcDimensionsWithScroll();
+                  _this2.observeScrollDir();
+                  _this2.stickyPosition();
                   break;
 
                 // When browser is resizing or there's no event, observe width
                 // breakpoint and re-calculate dimensions.
                 case 'resize':
                 default:
-                  _this3._widthBreakpoint();
-                  _this3.calcDimensions();
-                  _this3.stickyPosition(true);
+                  _this2._widthBreakpoint();
+                  _this2.calcDimensions();
+                  _this2.stickyPosition(true);
                   break;
               }
-              _this3._running = false;
+              _this2._running = false;
             });
           })(event.type);
         }
@@ -649,16 +639,21 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
           var support = this.support;
 
           support.transform = StickySidebar.supportTransform();
-          support.transform3d = StickySidebar.supportTransform(true);
+          // support.transform3d = StickySidebar.supportTransform(true);
         }
       }, {
         key: '_getTranslate',
         value: function _getTranslate() {
           var y = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
           var x = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-          var z = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
 
-          if (this.support.transform3d) return 'translate3d(' + y + ', ' + x + ', ' + z + ')';else if (this.support.translate) return 'translate(' + y + ', ' + x + ')';else return false;
+          // if( this.support.transform3d ) return 'translate3d(' + y +', '+ x +', '+ z +')';
+          // else 
+          if (this.support.transform) {
+            return 'translate(' + y + ', ' + x + ')';
+          } else {
+            return false;
+          }
         }
       }, {
         key: 'destroy',
@@ -719,9 +714,8 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
               style = support.style;
 
           (property + ' ' + prefixes.join(upper + ' ') + upper).split(' ').forEach(function (property, i) {
-            if (style[property] !== undefined) {
+            if (!result && style[property] !== undefined) {
               result = property;
-              return false;
             }
           });
           return result;
@@ -749,19 +743,11 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
       }, {
         key: 'offsetRelative',
         value: function offsetRelative(element) {
-          var result = { left: 0, top: 0 };
-
-          do {
-            var offsetTop = element.offsetTop;
-            var offsetLeft = element.offsetLeft;
-
-            if (!isNaN(offsetTop)) result.top += offsetTop;
-
-            if (!isNaN(offsetLeft)) result.left += offsetLeft;
-
-            element = 'BODY' === element.tagName ? element.parentElement : element.offsetParent;
-          } while (element);
-          return result;
+          var rect = element.getBoundingClientRect();
+          var documentElement = document.documentElement;
+          var top = rect.top + window.pageYOffset - documentElement.clientTop;
+          var left = rect.left + window.pageXOffset - documentElement.clientLeft;
+          return { top: top, left: left };
         }
       }, {
         key: 'addClass',

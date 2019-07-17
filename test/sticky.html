@@ -23,9 +23,6 @@
         padding: 100px 0 0;
     }
 
-    .inner-sidebar{
-        position: relative;
-    }
     .inner-sidebar-content{
         background: red;
         border: 1px solid #000;
@@ -37,33 +34,28 @@
         height: 2000px;
         background: cadetblue;
     }
-    
-    .top, .bottom{
-        position: absolute;
-        bottom: 100%;
-        margin-bottom: -1px;
-        height: 2px;
-        left: 1px;
-        right: 1px;
-        visibility: hidden;
-        /*background: green;*/
-    }
-    .bottom{
-        bottom: auto;
-        top: 100%;
-        margin-bottom: 0;
-        margin-top: -1px;
-    }
   </style>
   
   <script src="../dist/sticky.min.js"></script>
 </head>
 <body>
     
+    
+<div style="height: 100px"></div>
+
+<div class="nav-nav">
+    <div class="nav">
+        <div class="nav-inner" style="border-bottom: 1px solid #ccc">
+            nav
+        </div>
+    </div>
+</div>
+
+<div style="height: 100px"></div>
+    
 <div class="container">
     <div class="sidebar">
         <div class="inner-sidebar">
-            <div class="top"></div><div class="bottom"></div>
             <div class="inner-sidebar-content">
                 sidebar content
             </div>
@@ -78,7 +70,22 @@
   const stickySidebar = new StickySidebar(sidebar, {
     // container: document.querySelector('.container'),
     minWidth: 100,
-    resizeSensor: true
+    resizeSensor: true,
+    bottomSpacing: 20
+  });
+  // sidebar.addEventListener('affix.top.stickySidebar', function(e) {
+  //     console.log(e);
+  //     // unbottom
+  //     // bottom
+  //     // container-bottom
+  //     // top
+  //     // static
+  // });
+  
+  const nav = new StickySidebar(document.querySelector('.nav'), {
+    innerWrapper: document.querySelector('.nav-inner'),
+    container: document.documentElement,
+    resizeSensor: false
   });
 </script>
     

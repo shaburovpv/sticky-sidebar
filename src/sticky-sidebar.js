@@ -38,7 +38,7 @@ const StickySidebar = (() => {
        * Inner wrapper selector.
        * @type {String}
        */
-      innerWrapperSelector: '.inner-wrapper-sticky',
+      innerWrapper: '.inner-wrapper-sticky',
   
       /**
        * The name of CSS class to apply to elements when they have become stuck.
@@ -136,12 +136,16 @@ const StickySidebar = (() => {
         this._setSupportFeatures();
         
         // Get sticky sidebar inner wrapper, if not found, will create one.
-        if( this.options.innerWrapperSelector ){
-          this.sidebarInner = this.sidebar.querySelector(this.options.innerWrapperSelector);
-  
-          if( null === this.sidebarInner )
-            this.sidebarInner = false;
+        if (this.options.innerWrapper) {
+          if (typeof this.options.innerWrapper === 'string') {
+            this.sidebarInner = this.sidebar.querySelector(this.options.innerWrapper);
+
+            if (null === this.sidebarInner) this.sidebarInner = false;
+          } else {
+            this.sidebarInner = this.options.innerWrapper;
+          }
         }
+
         
         if( ! this.sidebarInner ){
           let wrapper = document.createElement('div');
@@ -160,7 +164,7 @@ const StickySidebar = (() => {
             let containers = document.querySelectorAll(this.options.container);
             containers = Array.prototype.slice.call(containers);
     
-            containers.forEach((container, item) => {
+            containers.forEach((container) => {
               if( ! container.contains(this.sidebar) ) return;
               this.container = container;
             });
@@ -202,16 +206,7 @@ const StickySidebar = (() => {
        */
       bindEvents(){
         window.addEventListener('resize', this.handleEventDebounce, {passive: true, capture: false});
-        // this.addScrollEvent();
-        
-        let cb = () => {
-          this.handleEvent();
-        }
-        var observer = new IntersectionObserver(cb, {threshold: [0, .5, 1]});
-        var topp = document.querySelector('.top');
-        observer.observe(topp);
-        var bottom = document.querySelector('.bottom');
-        observer.observe(bottom);
+        this.addScrollEvent();
 
         this.sidebar.addEventListener('update' + EVENT_KEY, this.handleEvent);
   
@@ -447,7 +442,7 @@ const StickySidebar = (() => {
             break;
           case 'CONTAINER-BOTTOM':
           case 'VIEWPORT-UNBOTTOM':
-            let translate = this._getTranslate(0, dims.translateY + 'px');
+            const translate = this._getTranslate(0, dims.translateY + 'px');
             
             if( translate )
               style.inner = {transform: translate};
@@ -481,7 +476,13 @@ const StickySidebar = (() => {
        */
       stickyPosition(force){
         var dims = this.dimensions;
-        if( this._breakpoint || dims.containerInnerHeight === dims.sidebarHeight ) return;
+        if( this._breakpoint ) return;
+        if( dims.containerInnerHeight <= dims.sidebarHeight ) {
+          this.removeScrollEvent();
+          return;
+        } else {
+          this.addScrollEvent();
+        }
   
         force = this._reStyle || force || false;
         
@@ -516,15 +517,6 @@ const StickySidebar = (() => {
           if( this._initialized ) this.sidebarInner.style.left = style.inner.left;
         }
         
-        switch( affixType ){
-          case 'VIEWPORT-TOP':
-          case 'VIEWPORT-BOTTOM':
-            this.addScrollEvent();
-            break;
-          default:
-            this.removeScrollEvent();
-            break;
-        }
         this.affixedType = affixType;
       }
   
@@ -587,7 +579,7 @@ const StickySidebar = (() => {
         var support = this.support;
   
         support.transform = StickySidebar.supportTransform();
-        support.transform3d = StickySidebar.supportTransform(true);
+        // support.transform3d = StickySidebar.supportTransform(true);
       }
   
       /**
@@ -598,10 +590,14 @@ const StickySidebar = (() => {
        * @param {Number} z - Value of Z-axis.
        * @return {String|False}
        */
-      _getTranslate(y = 0, x = 0, z = 0){
-        if( this.support.transform3d ) return 'translate3d(' + y +', '+ x +', '+ z +')';
-        else if( this.support.translate ) return 'translate('+ y +', '+ x +')';
-        else return false;
+      _getTranslate(y = 0, x = 0){
+        // if( this.support.transform3d ) return 'translate3d(' + y +', '+ x +', '+ z +')';
+        // else 
+        if( this.support.transform ) {
+          return 'translate('+ y +', '+ x +')';
+        } else {
+          return false;
+        }
       }
   
       /**
@@ -667,9 +663,8 @@ const StickySidebar = (() => {
             style = support.style;
   
         (property + ' ' + prefixes.join(upper + ' ') + upper).split(' ').forEach(function(property, i) {
-          if (style[property] !== undefined) {
+          if (!result && style[property] !== undefined) {
             result = property;
-            return false;
           }
         });
         return result;
@@ -711,22 +706,11 @@ const StickySidebar = (() => {
        * @static
        */
       static offsetRelative(element){
-        var result = {left: 0, top: 0};
-
-        do{
-          let offsetTop = element.offsetTop;
-          let offsetLeft = element.offsetLeft;
-  
-          if( ! isNaN(offsetTop) )
-            result.top += offsetTop;
-  
-          if( ! isNaN(offsetLeft) )
-            result.left += offsetLeft;
-
-          element = ( 'BODY' === element.tagName ) ?
-                      element.parentElement : element.offsetParent;
-        } while(element)
-        return result;
+        const rect = element.getBoundingClientRect();
+        const documentElement = document.documentElement;
+        const top = rect.top + window.pageYOffset - documentElement.clientTop;
+        const left = rect.left + window.pageXOffset - documentElement.clientLeft;        
+        return {top: top, left: left};
       }
   
       /**
