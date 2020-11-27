@@ -123,6 +123,12 @@ const StickySidebar = (() => {
         this.handleEvent = this.handleEvent.bind(this);
         this.handleEventDebounce = debounce(this.handleEvent, 500);
 
+        if (StickySidebar.supportResizeObserver()) {
+          this.resizeObserver = new ResizeObserver(() => {
+            this.handleEventDebounce();
+          });
+        }
+
         // Initialize sticky sidebar for first time.
         this.initialize();
       }
@@ -205,17 +211,59 @@ const StickySidebar = (() => {
        * @protected
        */
       bindEvents(){
+        if (this.eventBinded) return;
+        this.eventBinded = true;
+        
         window.addEventListener('resize', this.handleEventDebounce, {passive: true, capture: false});
         this.addScrollEvent();
 
         this.sidebar.addEventListener('update' + EVENT_KEY, this.handleEvent);
   
-        if( this.options.resizeSensor && 'undefined' !== typeof ResizeSensor ){
-          new ResizeSensor(this.sidebarInner, this.handleEventDebounce);
-          new ResizeSensor(this.container, this.handleEventDebounce);
+        if (StickySidebar.supportResizeObserver()) {
+          this.resizeObserver.observe(this.sidebarInner);
+          this.resizeObserver.observe(this.container);
+        } else {
+          if( this.options.resizeSensor && 'undefined' !== typeof ResizeSensor ){
+            new ResizeSensor(this.sidebarInner, this.handleEventDebounce);
+            new ResizeSensor(this.container, this.handleEventDebounce);
+          }
+        }
+      }
+      
+      removeEvents(){
+        this.eventBinded = false;
+        this.handleEventDebounce.clear();
+        
+        window.removeEventListener('resize', this.handleEventDebounce);
+        this.removeScrollEvent();
+  
+        this.sidebar.removeEventListener('update' + EVENT_KEY, this.handleEvent);
+  
+        if (StickySidebar.supportResizeObserver()) {
+          this.resizeObserver.unobserve(this.sidebarInner);
+          this.resizeObserver.unobserve(this.container);
+        } else {
+          if( this.options.resizeSensor && 'undefined' !== typeof ResizeSensor ){
+            ResizeSensor.detach(this.sidebarInner, this.handleEventDebounce);
+            ResizeSensor.detach(this.container, this.handleEventDebounce);
+          }
         }
       }
   
+      
+      addScrollEvent(){
+        if (!this.isScrollEventAdded) {
+          window.addEventListener('scroll', this.handleEvent, {passive: true, capture: false});
+          this.isScrollEventAdded = true;
+        }
+      }
+      removeScrollEvent(){
+        if (!!this.isScrollEventAdded) {
+          window.removeEventListener('scroll', this.handleEvent, {capture: false});
+          this.isScrollEventAdded = false;
+        }
+      }
+
       /**
        * Handles all events of the plugin.
        * @param {Object} event - Event object passed from listener.
@@ -542,7 +590,7 @@ const StickySidebar = (() => {
        * event, it will re-initialize sticky sidebar.
        * @public
        */
-      updateSticky(event = {type: 'scroll'}){
+      updateSticky(event = {type: 'resize'}){
         if( this._running ) return;
         this._running = true;
   
@@ -560,10 +608,11 @@ const StickySidebar = (() => {
               // When browser is resizing or there's no event, observe width
               // breakpoint and re-calculate dimensions.
               case 'resize':
-              default: 
+              default:
                 this._widthBreakpoint();
                 this.calcDimensions();
                 this.stickyPosition(true);
+                this.bindEvents();
                 break;
             }
             this._running = false;
@@ -605,33 +654,14 @@ const StickySidebar = (() => {
        * @public
        */
       destroy(){
-        window.removeEventListener('resize', this.handleEvent, {capture: false});
-        this.removeScrollEvent();
-  
-        this.sidebar.classList.remove(this.options.stickyClass);
-        this.sidebar.style.minHeight = '';
-  
-        this.sidebar.removeEventListener('update' + EVENT_KEY, this.handleEvent);
-        
-        this.resetStyles();
-  
-        if( this.options.resizeSensor && 'undefined' !== typeof ResizeSensor ){
-          ResizeSensor.detach(this.sidebarInner, this.handleEventDebounce);
-          ResizeSensor.detach(this.container, this.handleEventDebounce);
-        }
-      }
-      
-      addScrollEvent(){
-        if (!this.isScrollEventAdded) {
-          window.addEventListener('scroll', this.handleEvent, {passive: true, capture: false});
-          this.isScrollEventAdded = true;
-        }
-      }
-      removeScrollEvent(){
-        if (!!this.isScrollEventAdded) {
-          window.removeEventListener('scroll', this.handleEvent, {capture: false});
-          this.isScrollEventAdded = false;
-        }
+        requestAnimationFrame(() => {
+          this.sidebar.classList.remove(this.options.stickyClass);
+          this.sidebar.style.minHeight = '';
+          
+          this.resetStyles();
+          
+          this.removeEvents();
+        });
       }
       
       resetStyles(){
@@ -668,6 +698,10 @@ const StickySidebar = (() => {
           }
         });
         return result;
+      }
+  
+      static supportResizeObserver(){
+        return 'ResizeObserver' in window;
       }
   
       /**

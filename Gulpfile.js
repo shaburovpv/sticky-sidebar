@@ -25,18 +25,19 @@ const banner = [
 
 gulp.task("babel", function(){
   return gulp.src("src/sticky-sidebar.js")
+    .pipe(rename({ basename: 'sticky' }))
     .pipe(babel())
     .pipe(gulp.dest("dist"));
 });
 
 gulp.task('bundle', ['babel'], function(){
-  return gulp.src(['dist/sticky-sidebar.js'])
+  return gulp.src(['dist/sticky.js'])
     .pipe(sourcemaps.init())
     // transform the files here.
     .pipe(rollup({
       allowRealFiles: true,
       // any option supported by Rollup can be set here.
-      input: ['./dist/sticky-sidebar.js'],
+      input: ['./dist/sticky.js'],
       plugins: [ resolve(), commonjs() ],
       output: {
         format: 'umd',
@@ -48,12 +49,10 @@ gulp.task('bundle', ['babel'], function(){
 });
 
 gulp.task('uglify', ['bundle'], function(){
-  return gulp.src(['src/ResizeSensor.js', 'dist/sticky-sidebar.js'])
-    .pipe(concat('sticky.js'))
+  return gulp.src(['src/ResizeSensor.js', 'dist/sticky.js'])
+    .pipe(rename({ suffix: '.min' }))
     .pipe(uglify())
     .on('error', function (err) { gutil.log(gutil.colors.red('[Error]'), err.toString()); })
-    //.pipe(header(banner, {pkg}))
-    .pipe(rename({ suffix: '.min' }))
     .pipe(gulp.dest("dist/"));
 });
 
