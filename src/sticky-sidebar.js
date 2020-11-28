@@ -204,6 +204,7 @@ const StickySidebar = (() => {
         
         // Inform other properties the sticky sidebar is initialized.
         this._initialized = true;
+        this._enabled = true;
       }
   
       /**
@@ -591,11 +592,15 @@ const StickySidebar = (() => {
        * @public
        */
       updateSticky(event = {type: 'resize'}){
-        if( this._running ) return;
+        if( !this._enabled || this._running ) return;
         this._running = true;
   
         ((eventType) => {
           requestAnimationFrame(() => {
+            if( !this._enabled ) {
+              this._running = false;
+              return;
+            };
             switch( eventType ){
               // When browser is scrolling and re-calculate just dimensions
               // within scroll. 
@@ -648,20 +653,27 @@ const StickySidebar = (() => {
           return false;
         }
       }
-  
+          
+      /**
+       * Rstart sticky sidebar plugin.
+       * @public
+       */
+      restart() {
+        this._enabled = true;
+        this.updateSticky();
+      }
+
       /**
        * Destroy sticky sidebar plugin.
        * @public
        */
       destroy(){
-        requestAnimationFrame(() => {
-          this.sidebar.classList.remove(this.options.stickyClass);
-          this.sidebar.style.minHeight = '';
-          
-          this.resetStyles();
-          
-          this.removeEvents();
-        });
+        this._enabled = false;
+
+        this.sidebar.classList.remove(this.options.stickyClass);
+        this.sidebar.style.minHeight = '';
+        this.resetStyles();
+        this.removeEvents();
       }
       
       resetStyles(){

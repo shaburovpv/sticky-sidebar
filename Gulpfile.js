@@ -50,9 +50,15 @@ gulp.task('bundle', ['babel'], function(){
 
 gulp.task('uglify', ['bundle'], function(){
   return gulp.src(['src/ResizeSensor.js', 'dist/sticky.js'])
-    .pipe(rename({ suffix: '.min' }))
     .pipe(uglify())
+    .pipe(rename({ suffix: '.min' }))
     .on('error', function (err) { gutil.log(gutil.colors.red('[Error]'), err.toString()); })
+    .pipe(gulp.dest("dist/"));
+});
+
+gulp.task('banner', function(){
+  return gulp.src(['dist/sticky.min.js'])
+    .pipe(header(banner, {pkg}))
     .pipe(gulp.dest("dist/"));
 });
 
@@ -60,4 +66,7 @@ gulp.task('watch', function() {
   gulp.watch('src/*.js', ['default']);
 });
 
-gulp.task('default', ['uglify']);
+gulp.task('default', ['uglify'], function() {
+  gulp.start('banner');
+});
+

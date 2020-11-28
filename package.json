@@ -5,7 +5,7 @@
   "author": "Ahmed Bouhuolia",
   "email": "a.bouhuolia@gmail.com",
   "license": "The MIT License (MIT)",
-  "homepage": "https://github.com/abouolia/sticky-sidebar",
+  "homepage": "https://github.com/shaburovpv/sticky-sidebar",
   "main": "./dist/sticky-sidebar.js",
   "module": "./src/sticky-sidebar.js",
   "keywords": [
@@ -21,7 +21,7 @@
     "src"
   ],
   "bugs": {
-    "url": "https://github.com/abouolia/sticky-sidebar/issues"
+    "url": "https://github.com/shaburovpv/sticky-sidebar/issues"
   },
   "scripts": {
     "build": "gulp",
@@ -29,7 +29,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/abouolia/sticky-sidebar.git"
+    "url": "https://github.com/shaburovpv/sticky-sidebar.git"
   },
   "devDependencies": {
     "babel": "^6.23.0",
@@ -63,6 +63,9 @@
     "sinon": "^4.4.3"
   },
   "dependencies": {
-    "debounce": "^1.2.0"
+    "debounce": "1.2.0"
+  },
+  "engines": {
+    "node" : "<=10.23.0"
   }
 }
