@@ -26,13 +26,15 @@ const banner = [
 gulp.task("babel", function(){
   return gulp.src("src/sticky-sidebar.js")
     .pipe(rename({ basename: 'sticky' }))
+    .pipe(sourcemaps.init({loadMaps: true}))
     .pipe(babel())
+    .pipe(sourcemaps.write('.'))
     .pipe(gulp.dest("dist"));
 });
 
 gulp.task('bundle', ['babel'], function(){
   return gulp.src(['dist/sticky.js'])
-    .pipe(sourcemaps.init())
+    .pipe(sourcemaps.init({loadMaps: true}))
     // transform the files here.
     .pipe(rollup({
       allowRealFiles: true,

@@ -373,7 +373,7 @@ const StickySidebar = (() => {
        * @public
        * @return {String|False} - Proper affix type.
        */
-      getAffixType(){
+      getAffixType(force = false){
         this._calcDimensionsWithScroll();
         var dims = this.dimensions;
         var colliderTop = dims.viewportTop + dims.topSpacing;
@@ -382,6 +382,8 @@ const StickySidebar = (() => {
        if( colliderTop <= dims.sidebarTop || dims.containerHeight <= dims.sidebarHeight ){
           dims.translateY = 0;
           affixType = 'STATIC';
+        } else if (force) {
+          affixType = this._getAffixTypeScrollingDown();
         } else {
           affixType = ( 'up' === this.direction ) ? 
             this._getAffixTypeScrollingUp() : this._getAffixTypeScrollingDown();
@@ -538,7 +540,7 @@ const StickySidebar = (() => {
         var offsetTop = this.options.topSpacing;
         var offsetBottom = this.options.bottomSpacing;
   
-        var affixType = this.getAffixType();
+        var affixType = this.getAffixType(force);
         var style = this._getStyle(affixType);
         
         if( (this.affixedType != affixType || force) && affixType ){
