@@ -3,5 +3,4 @@
 /bower_components/
 docs/_site
 docs/.sass-cache
-
-/dist/
+.idea
