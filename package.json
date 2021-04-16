@@ -65,11 +65,5 @@
   "dependencies": {
     "css-element-queries": "1.2.3",
     "debounce": "1.2.0"
-  },
-  "engines": {
-    "node": "<11"
-  },
-  "directories": {
-    "test": "test"
   }
 }

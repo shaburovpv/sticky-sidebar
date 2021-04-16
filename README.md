@@ -21,20 +21,12 @@ For complete documentation and examples see [abouolia.github.com/sticky-sidebar]
 
 You can download sticky sidebar jQuery plugin from Bowser, NPM or just simply download it from this page and link to the ``sticky-sidebar.js`` file in your project folder.
 
-#### Bower
-
-If you are using bower as package manager:
-
-````
-bower install sticky-sidebar
-````
-
 #### NPM
 
 If you are using NPM as package manager:
 
 ````
-npm install sticky-sidebar
+npm install @shaburovpv/sticky-sidebar
 ````
 
 ## Usage
